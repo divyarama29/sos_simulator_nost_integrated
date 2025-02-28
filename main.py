@@ -21,7 +21,15 @@ from tatc.utils import swath_width_to_field_of_regard, swath_width_to_field_of_v
 from tatc.analysis import collect_multi_observations
 from tatc.schemas import Satellite
 from tatc.schemas import Point
-from nost_sim_integrated_code.function import read_master_file,compute_opportunity,update_requests,Snowglobe_constellation,compute_ground_track_and_format,filter_requests,write_back_to_appender
+from nost_sim_integrated_code.function import (
+    read_master_file,
+    compute_opportunity,
+    update_requests,
+    Snowglobe_constellation,
+    compute_ground_track_and_format,
+    filter_requests,
+    write_back_to_appender,
+)
 from nost_sim_integrated_code.entity import Collect_Observations
 
 # configure logging
@@ -41,26 +49,33 @@ simulator = Simulator()
 master = read_master_file()
 request_data = filter_requests(master)
 
+request_points = request_data.apply(
+    lambda r: Point(id=r["id"], latitude=r["latitude"], longitude=r["longitude"]),
+    axis=1,
+)
+
 # Add Collect_Observations entity
 entity = Collect_Observations(
-    constellation=None,
-    start_time=start,
-    requests=request_data
+    constellation=Snowglobe_constellation(start), requests=request_points
 )
+
+# add new requests
+# entity.new_requests = [ Point(id=50, latitude=0, longitude=0) ]
+
 simulator.add_entity(entity)
 
 # OBSERVERS
 
 # PROBLEM HERE, FUNCTION TAKES ARGUMENTS
-# add an observer to save observations at a specified interval 
+# add an observer to save observations at a specified interval
 simulator.add_observer(
     ScenarioTimeIntervalCallback(simulator, write_back_to_appender, time_step * 1440)
 )
 
 # PROBLEM HERE, FUNCTION TAKES ARGUMENTS, AND  HAD TO TRIGGER SERIES OF OTHER FUNCTIONS
 entity.add_observer(
-        PropertyChangeCallback(Satellite.PROPERTY_OBSERVATION, update_requests)
-    )
+    PropertyChangeCallback(Satellite.PROPERTY_OBSERVATION, update_requests)
+)
 
 
 # initialize the simulator
@@ -68,28 +83,3 @@ simulator.initialize(start, None, time_scale_factor)
 
 # execute the simulator
 simulator.execute(start, duration, time_step, None, time_scale_factor)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
