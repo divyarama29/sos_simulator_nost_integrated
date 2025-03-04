@@ -1,7 +1,7 @@
 # This Script stores all the functions that are used in the simulator code
 # The functions are stored in a separate file to make the main code more readable
 
-from typing import List
+from typing import List,Tuple
 
 # Importing Libraries
 import pandas as pd
@@ -17,7 +17,6 @@ from tatc.schemas import Point
 from tatc.analysis import collect_ground_track
 
 # Configure Constellation
-
 
 def Snowglobe_constellation(start: datetime) -> List[Satellite]:
     roll_angle = (30 + 33.5) / 2
@@ -55,37 +54,34 @@ def Snowglobe_constellation(start: datetime) -> List[Satellite]:
 
 from joblib import Parallel, delayed
 
-
 def compute_opportunity(
     constellation: List[Satellite],
     time: datetime,
     duration: timedelta,
-    requests: List[Point],
+    requests: List[List],
 ) -> gpd.GeoSeries:
     # filter requests
-    filtered_requsts = requests
-    # filtered_requsts = [
-    #     request
-    #     for request in requests
-    #     if request["simulation_status"].isna() or request["simulation_status"] is None
-    # ]
-    obsevations = pd.concat(
+    filtered_requests = requests
+    filtered_requests = [
+        request
+        for request in requests
+        if request[2].get("simulation_status").isna() or request[2].get("simulation_status") is None
+    ]
+    observations = pd.concat(
         Parallel(-1)(
             delayed(collect_multi_observations)(
-                point, constellation, time, time + duration
+                point[0], constellation, time, time + duration
             )
-            for point in filtered_requsts
+            for point in filtered_requests
         ),
         ignore_index=True,
     ).sort_values(by="epoch", ascending=True)
 
-    if not obsevations.empty:
-        return obsevations.iloc[0]
+    if not observations.empty:
+        return observations.iloc[0]
     return None
 
-
 # Computing Groundtrack and formatting into a dataframe
-
 
 def compute_ground_track_and_format(
     sat_object: Satellite, observation_time: datetime
@@ -102,15 +98,24 @@ def filter_requests(requests: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     ]
     return filtered_req
 
-
 # CALLBACK FUNCTIONS
-
 # Reading master file
 
-
 def read_master_file():
-    req = gpd.read_file("Master_file")
-    return req
+    request_data = gpd.read_file("Master_file")
+    request_points = request_data.apply(
+        lambda r: (
+            Point(id=r["simulator_id"], latitude=r["planner_latitude"], longitude=r["planner_longitude"]),
+            r["simulator_simulation_status"],
+            r["planner_time"],
+            r["simulator_completion_date"],
+            r["simulator_satellite"],
+            r["simulator_polygon_groundtrack"]
+        ),
+        axis=1
+    )
+    request_points= request_points.to_dict('records')
+    return request_points
 
 
 # Update Requests in temporary dataframe
@@ -118,12 +123,16 @@ def update_requests(requests, collected_observation):
     merged = requests.merge(collected_observation, on="id", how="left")
     return merged
 
-
 # Write to Master File
 # Occurs at fixed time step
 
+def write_back_to_appender(observations_list,time):
 
-def write_back_to_appender(dataframe):
-    constellation, satellite_dict = Snowglobe_constellation()
-    req = gpd.read_file("Master_file")
-    merged = req.merge(dataframe, on="id", how="left")
+    # Filter the observations based on matching day/date
+    filtered_observations = [
+        observation for observation in observations_list
+        if datetime.fromtimestamp(observation['epoch_time']).date() == time.date() 
+    ]
+
+    return filtered_observations
+    
