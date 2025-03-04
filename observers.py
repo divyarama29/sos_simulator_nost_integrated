@@ -31,27 +31,21 @@ class ScenarioTimeIntervalCallback(Observer):
 
     def __init__(
         self,
-        simulator: Simulator,
-        callback: Callable[[datetime], None],
-        time_inteval: timedelta,
-        time_init: timedelta = None,
+        callback: Callable[[object,datetime], None],
+        time_inteval: timedelta
     ):
-        self.simulator = simulator
         self.callback = callback
         self.time_interval = time_inteval
-        self.time_init = time_init
         self._next_time = None
 
     def on_change(
         self, source: object, property_name: str, old_value: object, new_value: object
     ):
-        if property_name == Simulator.PROPERTY_MODE and new_value == Mode.INITIALIZED:
-            self._next_time = self.time_init
-        elif property_name == Simulator.PROPERTY_TIME:
+        if property_name == source.PROPERTY_TIME:
             if self._next_time is None:
                 self._next_time = old_value + self.time_interval
             while self._next_time <= new_value:
-                self.callback(self._next_time)
+                self.callback(source, self._next_time)
                 self._next_time = self._next_time + self.time_interval
 
 

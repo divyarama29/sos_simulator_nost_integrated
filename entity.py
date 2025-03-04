@@ -14,10 +14,11 @@ from tatc.analysis import collect_ground_track, collect_observations
 from tatc.schemas import Satellite as TATC_Satellite, Point as TATC_Point
 from .function import (
     compute_opportunity,
-    update_requests,
+    # update_requests,
     Snowglobe_constellation,
     compute_ground_track_and_format,
-    filter_requests,
+    # filter_requests,
+    read_master_file
 )
 
 # from .schemas import Request, Observation
@@ -48,7 +49,7 @@ class Collect_Observations(Entity):
         self.requests = None
         self.next_requests = None
         self.observation_collected = None
-        self.new_requests = None
+        self.new_request_flag = None
 
     def initialize(self, init_time: datetime):
         super().initialize(init_time)
@@ -58,7 +59,7 @@ class Collect_Observations(Entity):
         self.requests = self.init_requests.copy()
         self.next_requests = None
         self.observation_collected = None
-        self.new_requests = None
+        self.new_request_flag  = None
 
     def tick(self, time_step: timedelta):
         super().tick(time_step)
@@ -100,8 +101,16 @@ class Collect_Observations(Entity):
             # update requests
             self.requests = self.next_requests
 
-        # check for new requests
-        if self.new_requests is not None:
-            for request in self.new_requests:
-                self.requests.append(request)
-            self.new_requests = None
+        # This code should execute only when message is received from the appender
+        # self.new_request_flag should be set to 1 by the observer in the appender
+
+        if self.new_request_flag is not None:
+            self.requests = read_master_file()
+            self.new_request_flag = None
+
+        
+        # # check for new requests
+        # if self.new_requests is not None:
+        #     for request in self.new_requests:
+        #         self.requests.append(request)
+        #     self.new_requests = None

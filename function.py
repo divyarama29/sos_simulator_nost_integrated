@@ -126,13 +126,22 @@ def update_requests(requests, collected_observation):
 # Write to Master File
 # Occurs at fixed time step
 
-def write_back_to_appender(observations_list,time):
+# def write_back_to_appender(observations_list,time):
 
-    # Filter the observations based on matching day/date
+#     # Filter the observations based on matching day/date
+#     filtered_observations = [
+#         observation for observation in observations_list
+#         if datetime.fromtimestamp(observation['epoch_time']).date() == time.date() 
+#     ]
+#     return filtered_observations
+    
+def write_back_to_appender(source, time):        
+    filtered_observations = source.requests
     filtered_observations = [
-        observation for observation in observations_list
+        observation for observation in filtered_observations
         if datetime.fromtimestamp(observation['epoch_time']).date() == time.date() 
     ]
-
-    return filtered_observations
     
+
+
+

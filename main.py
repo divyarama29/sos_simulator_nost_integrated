@@ -31,36 +31,47 @@ from .function import (
 )
 from .entity import Collect_Observations
 
-# Function to save observations
-observations_list = []    
+# # Function to save observations
+# observations_list = []    
 
 # configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Logging values
-def log_observations(observation):
+# # Logging values
+# def log_observations(observation):
     
-    """
-    Function to log_observations
-    """
-    observation_data = {
-    'simulator_id': observation['point_id'],  # Access the 'uid' column from the GeoSeries
-    'status': 'completed',
-    'time': observation['epoch'],
-    'satellite': observation['satellite'],
-    'groundtrack': observation['groundtrack']          
-    }
+#     """
+#     Function to log_observations
+#     """
+#     observation_data = {
+#     'simulator_id': observation['point_id'],  # Access the 'uid' column from the GeoSeries
+#     'status': 'completed',
+#     'time': observation['epoch'],
+#     'satellite': observation['satellite'],
+#     'groundtrack': observation['groundtrack']          
+#     }
 
-    observations_list.append(observation_data)    
-    # Logging the data
+#     observations_list.append(observation_data)    
+#     # Logging the data
+#     logger.info(
+#         "Request %s collected by %s at %s",
+#         observation['point_id'],  # Access the 'uid' column from the GeoSeries
+#         'completed',
+#         observation['epoch'],
+#         observation['satellite']
+#     ) 
+
+def log_observation(observation):
+    """
+    Log observation collection.
+    """
     logger.info(
         "Request %s collected by %s at %s",
-        observation['point_id'],  # Access the 'uid' column from the GeoSeries
+        observation['point_id'], 
         'completed',
         observation['epoch'],
-        observation['satellite']
-    ) 
+        observation['satellite'])
 
 # configure scenario
 start = datetime(2025, 1, 16, tzinfo=timezone.utc)  # nost simulation start
@@ -83,12 +94,12 @@ entity = Collect_Observations(
 
 simulator.add_entity(entity)
 entity.add_observer(
-        PropertyChangeCallback(Satellite.PROPERTY_OBSERVATION, log_observations)
+        PropertyChangeCallback(Satellite.PROPERTY_OBSERVATION, log_observation)
     )
 
 # Add Observers
-simulator.add_observer(
-    ScenarioTimeIntervalCallback(simulator, write_back_to_appender(observations_list), time_step_callback)
+entity.add_observer(
+    ScenarioTimeIntervalCallback(write_back_to_appender, time_step_callback)
 )
 
 # initialize the simulator
