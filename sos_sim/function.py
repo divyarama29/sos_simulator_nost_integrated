@@ -4,6 +4,7 @@
 from typing import List,Tuple
 
 # Importing Libraries
+from collections import namedtuple
 import pandas as pd
 import geopandas as gpd
 from shapely import Geometry
@@ -102,19 +103,19 @@ def filter_requests(requests: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 # Reading master file
 
 def read_master_file():
-    request_data = gpd.read_file("Master_file")
+    request_data = gpd.read_file("Master_file.geojson")
     request_points = request_data.apply(
         lambda r: (
-            Point(id=r["simulator_id"], latitude=r["planner_latitude"], longitude=r["planner_longitude"]),
-            r["simulator_simulation_status"],
-            r["planner_time"],
-            r["simulator_completion_date"],
-            r["simulator_satellite"],
-            r["simulator_polygon_groundtrack"]
+            point=Point(id=r["simulator_id"], latitude=r["planner_latitude"], longitude=r["planner_longitude"]),
+            status=r["simulator_simulation_status"],
+            time=r["planner_time"],
+            completion_date=r["simulator_completion_date"],
+            satellite=r["simulator_satellite"],
+            polygon_groundtrack=r["simulator_polygon_groundtrack"]
         ),
         axis=1
     )
-    request_points= request_points.to_dict('records')
+    # request_points= request_points.to_dict('records')
     return request_points
 
 

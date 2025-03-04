@@ -9,7 +9,7 @@ from pydantic import TypeAdapter
 import pandas as pd
 from tatc.schemas import Satellite as TATC_Satellite
 import geopandas as gpd
-from sos_simulator_nost_integrated.observers import ScenarioTimeIntervalCallback, PropertyChangeCallback
+from sos_sim.observers import ScenarioTimeIntervalCallback, PropertyChangeCallback
 #  import ScenarioTimeIntervalCallback, PropertyChangeCallback
 # from sos_sim.schemas import Observation, Request
 # from tatc.analysis import collect_ground_track
@@ -21,7 +21,7 @@ from sos_simulator_nost_integrated.observers import ScenarioTimeIntervalCallback
 
 from tatc.schemas import Satellite
 from tatc.schemas import Point
-from .function import (
+from sos_sim.function import (
     read_master_file,
     compute_opportunity,
     update_requests,
@@ -30,7 +30,7 @@ from .function import (
     filter_requests,
     write_back_to_appender,
 )
-from .entity import Collect_Observations
+from sos_sim.entity import Collect_Observations
 
 # # Function to save observations
 # observations_list = []    
